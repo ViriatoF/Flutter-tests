@@ -54,9 +54,14 @@ class Tile extends StatelessWidget {
   }
 }
 
-class GamePage extends StatelessWidget {
+class GamePage extends StatefulWidget {
   GamePage({super.key});
 
+  @override
+  State<GamePage> createState() => _GamePageState();
+}
+
+class _GamePageState extends State<GamePage> {
   final Game _game = Game();
 
   @override
@@ -64,36 +69,57 @@ class GamePage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
-        spacing: 5.0,
         children: [
-          for (final guess in _game.guesses)
+          for (var guess in _game.guesses)
             Row(
-              spacing: 5.0,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                for (final letter in guess) Tile(letter.char, letter.type),
+                for (var letter in guess)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2.5,
+                      vertical: 2.5,
+                    ),
+                    child: Tile(letter.char, letter.type),
+                  ),
               ],
             ),
           GuessInput(
-            onSubmitGuess: (guess) {
-              print(guess);
+            onSubmitGuess: (String guess) {
+              setState(() {
+                // NEW
+                _game.guess(guess);
+              });
             },
-          ), // Add game UI elements here
+          ),
         ],
       ),
     );
   }
 }
 
-class GuessInput extends StatelessWidget {
+class GuessInput extends StatefulWidget {
   GuessInput({super.key, required this.onSubmitGuess});
 
   final void Function(String) onSubmitGuess;
 
+  @override
+  State<GuessInput> createState() => _GuessInputState();
+}
+
+class _GuessInputState extends State<GuessInput> {
   final TextEditingController _textEditingController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
+  @override
+  void dispose() {
+    _textEditingController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
   void _onSubmit() {
-    onSubmitGuess(_textEditingController.text);
+    widget.onSubmitGuess(_textEditingController.text.trim());
     _textEditingController.clear();
     _focusNode.requestFocus();
   }
@@ -115,7 +141,7 @@ class GuessInput extends StatelessWidget {
               controller: _textEditingController,
               focusNode: _focusNode,
               autofocus: true,
-              onSubmitted: (value) {
+              onSubmitted: (input) {
                 _onSubmit();
               },
             ),
